@@ -86,9 +86,9 @@
     var width, height, asciifyHeight;
     const ASCII_CHARS = '.,:;+*?%S#@'.split('').reverse();
     const buckets = 255 / ASCII_CHARS.length;
-    const asciifyWidth = Math.floor(window.innerWidth * 0.03984 + 3.5);
+    var asciifyWidth = 80;
     const rem = parseInt(getComputedStyle(document.documentElement).fontSize);
-
+    var fontSize;
     var result_letterSpacing, result_lineHight;
 
     const constraints = { //相機限制
@@ -97,6 +97,10 @@
     };
 
     function getFrameFromVideo() {
+      result_ctx.font = `${fontSize}px sans-serif`;
+      result_ctx.textAlign = 'center';
+      result_ctx.textBaseline = 'middle';
+
       scale_ctx.clearRect(0, 0, result_canvas.width, result_canvas.height);
       result_ctx.clearRect(0, 0, result_canvas.width, result_canvas.height);
       //   result_ctx.save(); //儲存狀態
@@ -143,15 +147,9 @@
         .then(stream => {
           let info = stream.getTracks()[0].getSettings();
           width = info.width;
-
-          let fontSize = Math.floor(width * 5 * rem / window.innerWidth);
-          console.log(`rem:${rem}   font size:${fontSize}`);
-          result_ctx.font = `${fontSize}px serif`;
-
           height = info.height;
+          height = width * height / width;
           asciifyHeight = Math.floor(asciifyWidth * height / width);
-          console.log(width, height);
-          console.log(asciifyWidth, asciifyHeight);
           scale_canvas.width = asciifyWidth;
           scale_canvas.height = asciifyHeight;
           //   scale_canvas.style.width = width + 'px';
@@ -159,11 +157,14 @@
           result_canvas.width = (width + result_canvas_padding * 2);
           result_canvas.height = (height + result_canvas_padding * 2);
           result_letterSpacing = width / (asciifyWidth - 1);
+          console.log(width, (asciifyWidth - 1))
+          fontSize = result_letterSpacing; // Math.floor(width * 0.8 * rem / window.innerWidth);
           result_lineHight = height / (asciifyHeight - 1);
           canvas_out.style.transform = 'scale(1)';
           setTimeout(() => clickAlert.style.opacity = 0.2, 1000);
           getFrameFromVideo();
           document.body.addEventListener('click', play_pause);
+          console.log(`rem:${rem} | font size:${fontSize} | letter spacing:${result_letterSpacing}`);
         })
         .catch(error => {
           alert(error.toString());
@@ -173,15 +174,16 @@
     document.addEventListener("DOMContentLoaded", function() {
       if (window.innerWidth < window.innerHeight) {
         result_canvas.style.width = '90vw';
+        asciifyWidth = 40;
       } else {
         result_canvas.style.height = '90vh';
       }
+      try {
+        document.body.addEventListener('click', init);
+      } catch (e) {
+        alert(e.toString())
+      }
     });
-    try {
-      document.body.addEventListener('click', init);
-    } catch (e) {
-      alert(e.toString())
-    }
   </script>
 </body>
 
