@@ -18,6 +18,8 @@
       justify-content: center;
       align-items: center;
       cursor: pointer;
+
+      flex-direction: column;
     }
 
     #video,
@@ -141,7 +143,7 @@
           let info = stream.getTracks()[0].getSettings();
           width = info.width;
           height = info.height;
-
+          alert(`cw:${width} ch:${height}`);
           asciifyHeight = Math.floor(asciifyWidth * height / width);
 
           scale_canvas.width = asciifyWidth;
@@ -161,7 +163,8 @@
 
           canvas_out.style.transform = 'scale(1)';
           setTimeout(() => clickAlert.style.opacity = 0.2, 1000);
-          alert(asciifyWidth, asciifyHeight)
+          alert(`w:${asciifyWidth} h:${asciifyHeight}`);
+
           getFrameFromVideo();
           document.body.addEventListener('click', play_pause);
           console.log(`rem:${rem} | font size:${fontSize} | letter spacing:${result_letterSpacing}`);
