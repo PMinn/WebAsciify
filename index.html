@@ -22,7 +22,7 @@
 
     #video,
     #scale_canvas {
-      display: none;
+      /* display: none; */
     }
 
     .alert-out {
@@ -101,7 +101,6 @@
       result_ctx.textAlign = 'center';
       result_ctx.textBaseline = 'middle';
 
-      scale_ctx.clearRect(0, 0, result_canvas.width, result_canvas.height);
       result_ctx.clearRect(0, 0, result_canvas.width, result_canvas.height);
       //   result_ctx.save(); //儲存狀態
       scale_ctx.drawImage(video, 0, 0, width, height, 0, 0, asciifyWidth, asciifyHeight);
@@ -148,15 +147,19 @@
           let info = stream.getTracks()[0].getSettings();
           width = info.width;
           height = info.height;
+
           asciifyHeight = Math.floor(asciifyWidth * height / width);
+
           scale_canvas.width = asciifyWidth;
           scale_canvas.height = asciifyHeight;
+
           result_canvas.width = (width + result_canvas_padding * 2);
           result_canvas.height = (height + result_canvas_padding * 2);
+
           result_letterSpacing = width / (asciifyWidth - 1);
-          console.log(width, (asciifyWidth - 1))
           fontSize = result_letterSpacing; // Math.floor(width * 0.8 * rem / window.innerWidth);
           result_lineHight = height / (asciifyHeight - 1);
+
           canvas_out.style.transform = 'scale(1)';
           setTimeout(() => clickAlert.style.opacity = 0.2, 1000);
           getFrameFromVideo();
