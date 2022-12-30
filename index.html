@@ -148,12 +148,9 @@
           let info = stream.getTracks()[0].getSettings();
           width = info.width;
           height = info.height;
-          height = width * height / width;
           asciifyHeight = Math.floor(asciifyWidth * height / width);
           scale_canvas.width = asciifyWidth;
           scale_canvas.height = asciifyHeight;
-          //   scale_canvas.style.width = width + 'px';
-          //   scale_canvas.style.height = height + 'px';
           result_canvas.width = (width + result_canvas_padding * 2);
           result_canvas.height = (height + result_canvas_padding * 2);
           result_letterSpacing = width / (asciifyWidth - 1);
@@ -167,7 +164,7 @@
           console.log(`rem:${rem} | font size:${fontSize} | letter spacing:${result_letterSpacing}`);
         })
         .catch(error => {
-          alert(error.toString());
+          alert('ERROR:' + error.toString());
         })
     }
 
@@ -181,7 +178,7 @@
       try {
         document.body.addEventListener('click', init);
       } catch (e) {
-        alert(e.toString())
+        alert('ERROR:' + e.toString())
       }
     });
   </script>
