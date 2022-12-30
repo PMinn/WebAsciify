@@ -62,26 +62,20 @@
   <div class="alert-out">
     <div id="alert">點擊螢幕開始/暫停</div>
   </div>
-  <!-- <button id="start-camera">Start Camera</button> -->
   <video id="video" autoplay playsinline></video>
-  <!-- <button id="click_photo">Click Photo</button> -->
   <canvas id="scale_canvas"></canvas>
   <div id="canvas_out">
     <canvas id="result_canvas"></canvas>
   </div>
   <script>
-    // let camera_button = document.getElementById("start-camera");
     const clickAlert = document.getElementById('alert');
     const video = document.getElementById('video');
     const canvas_out = document.getElementById('canvas_out');
-    // const click_button = document.getElementById("click_photo");
     const scale_canvas = document.getElementById("scale_canvas");
-    const scale_ctx = scale_canvas.getContext("2d", {
-      willReadFrequently: true
-    });
     const result_canvas = document.getElementById("result_canvas");
     const result_canvas_padding = 20;
-    const result_ctx = result_canvas.getContext("2d");
+    var scale_ctx, result_ctx;
+
 
     var width, height, asciifyHeight;
     const ASCII_CHARS = '.,:;+*?%S#@'.split('').reverse();
@@ -159,6 +153,11 @@
           result_letterSpacing = width / (asciifyWidth - 1);
           fontSize = result_letterSpacing; // Math.floor(width * 0.8 * rem / window.innerWidth);
           result_lineHight = height / (asciifyHeight - 1);
+
+          scale_ctx = scale_canvas.getContext("2d", {
+            willReadFrequently: true
+          });
+          result_ctx = result_canvas.getContext("2d");
 
           canvas_out.style.transform = 'scale(1)';
           setTimeout(() => clickAlert.style.opacity = 0.2, 1000);
