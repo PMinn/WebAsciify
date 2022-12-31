@@ -118,7 +118,7 @@
       return false;
     }
 
-    function getCameras() {
+    function getCamerasList() {
       return navigator.mediaDevices.enumerateDevices()
         .then(devices => devices.filter(device => device.kind == 'videoinput'))
     }
@@ -150,50 +150,84 @@
       setTimeout(() => clickAlert.style.opacity = 0.2, 3000);
     }
 
+    function startStream(deviceId) {
+      return new Promise((resolve, reject) => {
+        try {
+          navigator.mediaDevices.getUserMedia({
+              audio: false,
+              video: true,
+              deviceId: {
+                exact: deviceId
+              }
+            })
+            .then(stream => {
+              video.addEventListener("loadedmetadata", function() {
+                resolve({
+                  width: this.videoWidth,
+                  height: this.videoHeight
+                })
+              });
+              video.srcObject = stream;
+              video.onloadedmetadata = () => video.play();
+            })
+        } catch (e) {
+          reject(e);
+        }
+      })
+    };
+
+    function selectCamera(message) {
+      var result = prompt(message, '1');
+      return parseInt(result);
+    }
+
     function init() {
       document.body.removeEventListener('click', init);
       if (checkCameraAPI()) {
-        alert('check media:true');
-        getCameraStream()
-          .then(stream => {
-            getCameras()
-              .then(devices => {
-                console.log(devices)
-                devices.forEach((device) => {
-                  alert(`${device.kind}: ${device.label} id = ${device.deviceId}`);
-                });
-              })
-            let info = stream.getTracks()[0].getSettings();
-            width = info.width;
-            height = info.height;
-            alert(`Track w:${width} Track h:${height}`);
-            asciifyHeight = Math.floor(asciifyWidth * height / width);
-
-            scale_canvas.width = asciifyWidth;
-            scale_canvas.height = asciifyHeight;
-
-            result_canvas.width = (width + result_canvas_padding * 2);
-            result_canvas.height = (height + result_canvas_padding * 2);
-
-            result_letterSpacing = width / (asciifyWidth - 1);
-            fontSize = result_letterSpacing; // Math.floor(width * 0.8 * rem / window.innerWidth);
-            result_lineHight = height / (asciifyHeight - 1);
-
-            scale_ctx = scale_canvas.getContext("2d", {
-              willReadFrequently: true
-            });
-            result_ctx = result_canvas.getContext("2d");
-
-            canvas_out.style.transform = 'scale(1)';
-            setTimeout(() => clickAlert.style.opacity = 0.2, 1000);
-            alert(`w:${asciifyWidth} h:${asciifyHeight}`);
-
-            getFrameFromVideo();
-            document.body.addEventListener('click', play_pause);
-            console.log(`rem:${rem} | font size:${fontSize} | letter spacing:${result_letterSpacing}`);
+        getCamerasList()
+          .then(devices => {
+            console.log(devices)
+            // devices.forEach((device) => {
+            //   alert(`${device.kind}: ${device.label} id = ${device.deviceId}`);
+            // });
+            return devices[selectCamera(devices.map((d, i) => `${i+1}.${d.label}`).join('\n')) - 1]
           })
-          .catch(error => {
-            alert('ERROR:' + error.toString());
+          .then(selectedCamera => {
+            startStream(selectedCamera.deviceId)
+              .then(info => {
+                // console.log(stream.getTracks())
+                // let info = stream.getTracks()[0].getSettings();
+                width = info.width;
+                height = info.height;
+                alert(`Track w:${width} Track h:${height}`);
+                asciifyHeight = Math.floor(asciifyWidth * height / width);
+
+                scale_canvas.width = asciifyWidth;
+                scale_canvas.height = asciifyHeight;
+
+                result_canvas.width = (width + result_canvas_padding * 2);
+                result_canvas.height = (height + result_canvas_padding * 2);
+
+                result_letterSpacing = width / (asciifyWidth - 1);
+                fontSize = result_letterSpacing; // Math.floor(width * 0.8 * rem / window.innerWidth);
+                result_lineHight = height / (asciifyHeight - 1);
+
+                scale_ctx = scale_canvas.getContext("2d", {
+                  willReadFrequently: true
+                });
+                result_ctx = result_canvas.getContext("2d");
+
+                canvas_out.style.transform = 'scale(1)';
+                setTimeout(() => clickAlert.style.opacity = 0.2, 1000);
+                alert(`w:${asciifyWidth} h:${asciifyHeight}`);
+
+                getFrameFromVideo();
+                document.body.addEventListener('click', play_pause);
+                console.log(`rem:${rem} | font size:${fontSize} | letter spacing:${result_letterSpacing}`);
+              })
+              .catch(error => {
+                alert('ERROR:' + error.toString());
+              })
           })
       } else {
         alert('check media:false');
