@@ -78,7 +78,8 @@
     const result_canvas_padding = 20;
     var scale_ctx, result_ctx;
 
-
+    const facingMode = ['user', 'environment'];
+    var facingModeIndex = 0;
     var width, height, asciifyHeight;
     const ASCII_CHARS = '.,:;+*?%S#@'.split('').reverse();
     const buckets = 255 / ASCII_CHARS.length;
@@ -86,11 +87,6 @@
     const rem = parseInt(getComputedStyle(document.documentElement).fontSize);
     var fontSize;
     var result_letterSpacing, result_lineHight;
-
-    const constraints = { //相機限制
-      audio: false,
-      video: true
-    };
 
     function getFrameFromVideo() {
       result_ctx.font = `${fontSize}px sans-serif`;
@@ -117,9 +113,27 @@
       requestAnimationFrame(getFrameFromVideo);
     };
 
-    function getCameraStream() { //要 camera 的權限
-      return navigator.mediaDevices.getUserMedia(constraints)
+    function checkCameraAPI() {
+      if ('mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices) return true;
+      return false;
+    }
+
+    function getCameras() {
+      return navigator.mediaDevices.enumerateDevices()
+        .then(devices => devices.filter(device => device.kind == 'videoinput'))
+    }
+
+    function getCameraStream() {
+      return navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: true
+        })
         .then(stream => {
+          video.addEventListener("loadedmetadata", function() {
+            let vwidth = this.videoWidth,
+              vheight = this.videoHeight;
+            alert(`video w:${vwidth} video h:${vheight}`);
+          }, false);
           video.srcObject = stream;
           video.onloadedmetadata = () => video.play();
           return stream;
@@ -138,40 +152,52 @@
 
     function init() {
       document.body.removeEventListener('click', init);
-      getCameraStream()
-        .then(stream => {
-          let info = stream.getTracks()[0].getSettings();
-          width = info.width;
-          height = info.height;
-          alert(`cw:${width} ch:${height}`);
-          asciifyHeight = Math.floor(asciifyWidth * height / width);
+      if (checkCameraAPI()) {
+        alert('check media:true');
+        getCameraStream()
+          .then(stream => {
+            getCameras()
+              .then(devices => {
+                console.log(devices)
+                devices.forEach((device) => {
+                  alert(`${device.kind}: ${device.label} id = ${device.deviceId}`);
+                });
+              })
+            let info = stream.getTracks()[0].getSettings();
+            width = info.width;
+            height = info.height;
+            alert(`Track w:${width} Track h:${height}`);
+            asciifyHeight = Math.floor(asciifyWidth * height / width);
 
-          scale_canvas.width = asciifyWidth;
-          scale_canvas.height = asciifyHeight;
+            scale_canvas.width = asciifyWidth;
+            scale_canvas.height = asciifyHeight;
 
-          result_canvas.width = (width + result_canvas_padding * 2);
-          result_canvas.height = (height + result_canvas_padding * 2);
+            result_canvas.width = (width + result_canvas_padding * 2);
+            result_canvas.height = (height + result_canvas_padding * 2);
 
-          result_letterSpacing = width / (asciifyWidth - 1);
-          fontSize = result_letterSpacing; // Math.floor(width * 0.8 * rem / window.innerWidth);
-          result_lineHight = height / (asciifyHeight - 1);
+            result_letterSpacing = width / (asciifyWidth - 1);
+            fontSize = result_letterSpacing; // Math.floor(width * 0.8 * rem / window.innerWidth);
+            result_lineHight = height / (asciifyHeight - 1);
 
-          scale_ctx = scale_canvas.getContext("2d", {
-            willReadFrequently: true
-          });
-          result_ctx = result_canvas.getContext("2d");
+            scale_ctx = scale_canvas.getContext("2d", {
+              willReadFrequently: true
+            });
+            result_ctx = result_canvas.getContext("2d");
 
-          canvas_out.style.transform = 'scale(1)';
-          setTimeout(() => clickAlert.style.opacity = 0.2, 1000);
-          alert(`w:${asciifyWidth} h:${asciifyHeight}`);
+            canvas_out.style.transform = 'scale(1)';
+            setTimeout(() => clickAlert.style.opacity = 0.2, 1000);
+            alert(`w:${asciifyWidth} h:${asciifyHeight}`);
 
-          getFrameFromVideo();
-          document.body.addEventListener('click', play_pause);
-          console.log(`rem:${rem} | font size:${fontSize} | letter spacing:${result_letterSpacing}`);
-        })
-        .catch(error => {
-          alert('ERROR:' + error.toString());
-        })
+            getFrameFromVideo();
+            document.body.addEventListener('click', play_pause);
+            console.log(`rem:${rem} | font size:${fontSize} | letter spacing:${result_letterSpacing}`);
+          })
+          .catch(error => {
+            alert('ERROR:' + error.toString());
+          })
+      } else {
+        alert('check media:false');
+      }
     }
 
     document.addEventListener("DOMContentLoaded", function() {
