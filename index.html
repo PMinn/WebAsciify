@@ -18,13 +18,11 @@
       justify-content: center;
       align-items: center;
       cursor: pointer;
-
-      flex-direction: column;
     }
 
     #video,
     #scale_canvas {
-      /* display: none; */
+      display: none;
     }
 
     .alert-out {
@@ -57,26 +55,37 @@
       transform: scale(0);
       transition: transform .5s;
     }
+
+    #device {
+      position: fixed;
+      right: 10px;
+      top: 10px;
+    }
   </style>
 </head>
 
 <body>
-  <div class="alert-out">
-    <div id="alert">點擊螢幕開始/暫停</div>
-  </div>
+  <select id="device"></select>
   <video id="video" autoplay playsinline></video>
   <canvas id="scale_canvas"></canvas>
   <div id="canvas_out">
     <canvas id="result_canvas"></canvas>
   </div>
+  <div class="alert-out">
+    <div id="alert">點擊畫面開始</div>
+  </div>
   <script>
+    const deviceSelect = document.getElementById('device');
     const clickAlert = document.getElementById('alert');
     const video = document.getElementById('video');
     const canvas_out = document.getElementById('canvas_out');
     const scale_canvas = document.getElementById("scale_canvas");
+    const scale_ctx = scale_canvas.getContext("2d", {
+      willReadFrequently: true
+    });
     const result_canvas = document.getElementById("result_canvas");
     const result_canvas_padding = 20;
-    var scale_ctx, result_ctx;
+    const result_ctx = result_canvas.getContext("2d");
 
     const facingMode = ['user', 'environment'];
     var facingModeIndex = 0;
@@ -123,22 +132,6 @@
         .then(devices => devices.filter(device => device.kind == 'videoinput'))
     }
 
-    function getCameraStream() {
-      return navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: true
-        })
-        .then(stream => {
-          video.addEventListener("loadedmetadata", function() {
-            let vwidth = this.videoWidth,
-              vheight = this.videoHeight;
-            alert(`video w:${vwidth} video h:${vheight}`);
-          }, false);
-          video.srcObject = stream;
-          video.onloadedmetadata = () => video.play();
-          return stream;
-        })
-    }
 
     function play_pause() {
       clickAlert.style.opacity = 1;
@@ -150,23 +143,31 @@
       setTimeout(() => clickAlert.style.opacity = 0.2, 3000);
     }
 
-    function startStream(deviceId) {
+    function startStream(deviceId = null) {
       return new Promise((resolve, reject) => {
+        var option = {
+          audio: false,
+          video: true
+        };
+        if (deviceId) {
+          option.deviceId = {
+            exact: deviceId
+          }
+        }
         try {
-          navigator.mediaDevices.getUserMedia({
-              audio: false,
-              video: true,
-              deviceId: {
-                exact: deviceId
-              }
-            })
+          navigator.mediaDevices.getUserMedia(option)
             .then(stream => {
-              video.addEventListener("loadedmetadata", function() {
+              if (video.srcObject) video.srcObject.getVideoTracks().forEach(vidTrack => vidTrack.stop());
+              console.log(stream)
+
+              function videoOnloadedmetadata() {
+                video.removeEventListener("loadedmetadata", videoOnloadedmetadata);
                 resolve({
                   width: this.videoWidth,
                   height: this.videoHeight
                 })
-              });
+              }
+              video.addEventListener("loadedmetadata", videoOnloadedmetadata);
               video.srcObject = stream;
               video.onloadedmetadata = () => video.play();
             })
@@ -181,54 +182,62 @@
       return parseInt(result);
     }
 
+    function deviceSelectOnChange() {
+      startStream(this.value)
+        .then(info => {
+
+        })
+    }
+
     function init() {
       document.body.removeEventListener('click', init);
       if (checkCameraAPI()) {
         getCamerasList()
           .then(devices => {
-            console.log(devices)
-            // devices.forEach((device) => {
-            //   alert(`${device.kind}: ${device.label} id = ${device.deviceId}`);
-            // });
-            return devices[selectCamera(devices.map((d, i) => `${i+1}.${d.label}`).join('\n')) - 1]
+            devices.forEach(device => {
+              var option = document.createElement('option');
+              option.innerText = device.label;
+              option.value = device.deviceId;
+              deviceSelect.appendChild(option)
+            })
           })
-          .then(selectedCamera => {
-            startStream(selectedCamera.deviceId)
-              .then(info => {
-                // console.log(stream.getTracks())
-                // let info = stream.getTracks()[0].getSettings();
-                width = info.width;
-                height = info.height;
-                alert(`Track w:${width} Track h:${height}`);
-                asciifyHeight = Math.floor(asciifyWidth * height / width);
+        /* startStream() //selectedCamera.deviceId
+           .then(info => {
+             getCamerasList()
+               .then(devices => {
+                 devices.forEach(device => {
+                   var option = document.createElement('option');
+                   option.innerText = device.label;
+                   option.value = device.deviceId;
+                   deviceSelect.appendChild(option)
+                 })
+               })
+             deviceSelect.addEventListener('change', deviceSelectOnChange);
+             width = info.width;
+             height = info.height;
+             asciifyHeight = Math.floor(asciifyWidth * height / width);
 
-                scale_canvas.width = asciifyWidth;
-                scale_canvas.height = asciifyHeight;
+             scale_canvas.width = asciifyWidth;
+             scale_canvas.height = asciifyHeight;
 
-                result_canvas.width = (width + result_canvas_padding * 2);
-                result_canvas.height = (height + result_canvas_padding * 2);
+             result_canvas.width = (width + result_canvas_padding * 2);
+             result_canvas.height = (height + result_canvas_padding * 2);
 
-                result_letterSpacing = width / (asciifyWidth - 1);
-                fontSize = result_letterSpacing; // Math.floor(width * 0.8 * rem / window.innerWidth);
-                result_lineHight = height / (asciifyHeight - 1);
+             result_letterSpacing = width / (asciifyWidth - 1);
+             fontSize = result_letterSpacing; // Math.floor(width * 0.8 * rem / window.innerWidth);
+             result_lineHight = height / (asciifyHeight - 1);
 
-                scale_ctx = scale_canvas.getContext("2d", {
-                  willReadFrequently: true
-                });
-                result_ctx = result_canvas.getContext("2d");
+             canvas_out.style.transform = 'scale(1)';
+             setTimeout(() => clickAlert.style.opacity = 0.2, 1000);
 
-                canvas_out.style.transform = 'scale(1)';
-                setTimeout(() => clickAlert.style.opacity = 0.2, 1000);
-                alert(`w:${asciifyWidth} h:${asciifyHeight}`);
-
-                getFrameFromVideo();
-                document.body.addEventListener('click', play_pause);
-                console.log(`rem:${rem} | font size:${fontSize} | letter spacing:${result_letterSpacing}`);
-              })
-              .catch(error => {
-                alert('ERROR:' + error.toString());
-              })
-          })
+             getFrameFromVideo();
+             result_canvas.addEventListener('click', play_pause);
+             clickAlert.innerText = '點擊畫布開始/暫停'
+             console.log(`rem:${rem} | font size:${fontSize} | letter spacing:${result_letterSpacing}`);
+           })
+           .catch(error => {
+             alert('ERROR:' + error.toString());
+           })*/
       } else {
         alert('check media:false');
       }
