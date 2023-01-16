@@ -1,0 +1,42 @@
+.input-outer {
+    width: 80vw;
+    border-radius: 20px;
+    background-color: #fff;
+    padding: 40px;
+    box-shadow: 10px 10px 50px 50px #00000010;
+}
+
+.input-outer label {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    border-radius: 10px;
+    border: #bbbbbb 3px dashed;
+    width: 80vw;
+    height: 50vh;
+    cursor: pointer;
+    z-index: 5;
+    transition: all 0.5s;
+}
+
+.input-outer label * {
+    z-index: 4;
+}
+
+.input-outer label.highlight {
+    border-color: #ffd803;
+    background-color: rgba(255, 243, 175, 0.479);
+}
+
+.input-outer label svg {
+    width: 50px;
+}
+
+.input-outer label p {
+    color: #585858
+}
+
+.input-outer input {
+    display: none;
+}

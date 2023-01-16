@@ -13,7 +13,7 @@ const result_ctx = result_canvas.getContext("2d");
 
 var facingModeIndex = 0;
 var width, height, asciifyHeight;
-const ASCII_CHARS = '@#S%?*+;:,.'.split('');
+const ASCII_CHARS = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,"^`\'.'.split('');
 const buckets = 255 / ASCII_CHARS.length;
 var asciifyWidth = 80;
 const rem = parseInt(getComputedStyle(document.documentElement).fontSize);
